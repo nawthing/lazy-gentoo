@@ -51,7 +51,6 @@ mount --make-slave /mnt/gentoo/run
 
 
 CHR_CRY() {
-chroot /mnt/gentoo /bin/bash
 cp chrootbuild /mnt/gentoo/chrootbuild 
 chmod +x /mnt/gentoo/chrootbuild 
 chroot /mnt/gentoo bash chrootbuild && rm /mnt/gentoo/chrootbuild 
