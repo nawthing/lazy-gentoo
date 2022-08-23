@@ -1,0 +1,106 @@
+#!/bin/bash
+
+
+STARL() {
+clear
+/bin/echo -e '\n\n' "\e[1;36mRUNNING IN CHROOT ENVIRONMENT...\e[0m"
+echo -e '\n'                                        
+read -p "Enter Hostname : " HOSTNAME 
+echo -e '\n'                                        
+read -p "Enter Username: " USERNAME
+
+clear
+/bin/echo -e '\n\n' "\e[1;32mRE-ENTER THE FOLLOWING PARTITIONS FOR CHROOT ENVIRONMENT!...
+\e[0m"
+lsblk
+echo -e '\n'                                        
+read -p "RE-Enter EFI partition for creating fstab  (eg: sda1,vda1,nvme0n1p1) : " GEN_EFI
+echo -e '\n'                                        
+read -p "RE-Enter the Root partition (eg: sda2,vda2, nvme0n1p2) : " RTVLME
+
+
+clear
+
+
+printf '
+Africa/Abidjan 
+Africa/Casablanca
+America/Adak 
+America/Los_Angeles 
+Antarctica/Casey  
+Antarctica/Vostok
+Asia/Kolkata 
+Asia/Tokyo 
+Atlantic/Bermuda 
+Atlantic/Reykjavik
+Australia/Lord_Howe 
+Australia/Melbourne
+Europe/Amsterdam 
+Europe/Istanbul
+Indian/Kerguelen
+Indian/Reunion
+Pacific/Chuuk 
+Pacific/Wake
+UTC
+'
+
+read -p "Enter Timezone: " TIMEZONE 
+
+}
+
+
+AUTOCON(){
+emerge-webrsync
+emerge --ask --verbose --update --deep --newuse @world
+echo $TIMEZONE > /etc/timezone
+emerge --config sys-libs/timezone-data
+echo en_US.UTF-8 UTF-8 >> /etc/locale.gen
+echo en_US ISO-8859-1 >> /etc/locale.gen
+locale-gen
+echo LANG=en_US.UTF-8 >> /etc/locale.conf 
+emerge --ask sys-kernel/installkernel-gentoo sys-kernel/gentoo-kernel-bin
+
+
+UUID_EFI=$(blkid -o value -s UUID /dev/$GEN_EFI)
+UUID_ROOT=$(blkid -o value -s UUID /dev/$RTVLME)
+
+
+echo "UUID=${UUID_EFI}	/boot/efi	vfat	defaults	  0       0" >> /etc/fstab	      
+echo "UUID=${UUID_ROOT}  /     ext4     defaults             0       0" >> /etc/fstab
+}
+
+
+
+
+FIN_ACT(){
+/bin/echo -e '\n\n' "\e[1;33mEnter root password\e[0m"
+echo -e '\n'
+passwd
+
+emerge --ask net-misc/dhcpcd net-wireless/iw net-wireless/wpa_supplicant
+rc-update add dhcpcd default
+emerge --ask sys-boot/grub
+grub-install --target=x86_64-efi --efi-directory=/boot/efi
+grub-mkconfig -o /boot/grub/grub.cfg
+exit
+}
+
+
+
+#call_func
+
+STARL
+AUTOCON
+FIN_ACT
+
+
+
+
+
+
+
+
+
+
+
+

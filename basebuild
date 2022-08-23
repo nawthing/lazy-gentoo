@@ -1,0 +1,96 @@
+#!/bin/bash
+
+PART_INT() {
+ping -c 1 gentoo.org
+/bin/echo -e '\n\n' "\e[1;36mSTARTING SCRIPT...\e[0m"
+sleep 1
+clear
+/bin/echo -e '\n\n' "\e[1;36mENTER THE FOLLOWING PARAMETERS...\e[0m"
+echo -e '\n'                                        
+lsblk
+echo -e '\n'                                        
+read -p "Drive name (eg: sda,vda,nvme0) : " DRIVE
+cfdisk /dev/$DRIVE 
+clear
+echo -e '\n'                                        
+lsblk /dev/$DRIVE 
+echo -e '\n'                                        
+read -p "EFI partition : " EFI
+echo -e '\n'                                        
+read -p "Root partition : " ROOT
+}
+
+FRT_MAIN() {
+clear && /bin/echo -e '\n\n' "\e[1;32mFormating Drives...\e[0m"
+echo -e '\n'                                        
+mkfs.fat -F32 /dev/$EFI 
+mkfs.ext4 /dev/$ROOT
+mkdir -p /mnt/gentoo
+mount /dev/$ROOT /mnt/gentoo
+mkdir -p /mnt/gentoo/boot/efi
+mount /dev/$EFI /mnt/gentoo/boot/efi
+
+SYS_GRD() {
+curl https://mirrors.dotsrc.org/gentoo/releases/amd64/autobuilds/current-stage3-amd64-openrc/stage3-amd64-openrc-20220821T170533Z.tar.xz > stage3-amd64-openrc-20220821T170533Z.tar.xz
+tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/gentoo 
+
+mkdir -p /mnt/gentoo/etc/portage/repos.conf 
+cp /mnt/gentoo/usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos.conf/gentoo.conf
+cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
+
+rmount --types proc /proc /mnt/gentoo/proc
+mount --rbind /sys /mnt/gentoo/sys
+mount --make-rslave /mnt/gentoo/sys
+mount --rbind /dev /mnt/gentoo/dev
+mount --make-rslave /mnt/gentoo/dev
+mount --bind /run /mnt/gentoo/run
+mount --make-slave /mnt/gentoo/run
+
+
+}
+
+
+CHR_CRY() {
+chroot /mnt/gentoo /bin/bash
+cp chrootbuild /mnt/gentoo/chrootbuild 
+chmod +x /mnt/gentoo/chrootbuild 
+chroot /mnt/gentoo bash chrootbuild && rm /mnt/gentoo/chrootbuild 
+}
+
+CLOSG(){
+umount -R /mnt
+clear 
+/bin/echo -e '\n\n' "\e[1;32mINSTALLATION COMPLETED!...\e[0m"
+sleep 1
+/bin/echo -e '\n\n' "\e[1;32mREBOOTING IN ..3\e[0m"
+sleep 1
+/bin/echo -e '\n\n' "\e[1;32mREBOOTING IN ..2\e[0m"
+sleep 1
+/bin/echo -e '\n\n' "\e[1;32mREBOOTING IN ..1\e[0m"
+sleep 1
+/bin/echo -e '\n\n' "\e[1;31mREBOOTING NOW......
+\e[0m"
+reboot
+}
+
+
+#starting point
+PART_INT
+FRT_MAIN
+SYS_GRD
+CHR_CRY
+CLOSG
+
+
+
+
+
+
+
+
+
+
+
+
+
+
